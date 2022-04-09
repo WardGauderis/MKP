@@ -24,8 +24,8 @@ int main(int argc, char* argv[]) {
 	if (pars->II) {
 		(s.*pars->II)(*p, pars->CH);
 		if (verbose)
-			std::cout << "After applying the iterative improvement algorithm:" << std::endl;
-		std::cout << "\n" << s;
+			std::cout << "After applying the iterative improvement algorithm:";
+		std::cout << std::endl << s;
 	}
 
 	destroy_problem(p);

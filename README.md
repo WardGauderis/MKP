@@ -25,3 +25,20 @@ MKP [problem instance] --[constructive heuristic] --[local search algorithm] [--
 
 `--verbose` is optional and will print the full problem and solution to stdout, otherwise only the solution value is printed.
 `--seed` is optional and will set the seed for the random number generator.
+
+# Measurements.txt
+
+This file contains the measurements of the recorded solution values and CPU times over all problem instances and algorithms.
+The CPU time is reported in milliseconds. The headers of the columns are abbreviated as combinations of the following:
+- `f`: FI
+- `b`: BI
+- `v`: VND
+
+
+- `r`: random
+- `g`: greedy
+- `t`: toyoda
+
+
+- `s`: solution value
+- `t`: CPU time
