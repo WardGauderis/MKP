@@ -9,7 +9,7 @@ value_stats <- stats[, seq(1, 24, by=2)]
 time_stats <- stats[, seq(2, 24, by=2)]
 
 relative_percentage_deviation <- function(value) {
-  relative <- value <- 100 * (best$best - value) / best$best;
+  relative <- 100 * (best$best - value) / best$best;
   return (relative);
 }
 

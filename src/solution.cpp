@@ -5,6 +5,11 @@
 #include "solution.h"
 #include "util.h"
 
+#include <chrono>
+#include <csignal>
+
+using namespace std::chrono;
+
 bool verbose = false;
 
 /**
@@ -31,6 +36,7 @@ bool Solution::add(const size_t item, const problem& problem) {
 		resources_used[i] += problem.constraints[item][i];
 	}
 
+	++size;
 	return true;
 }
 
@@ -51,6 +57,7 @@ bool Solution::remove(size_t item, const problem& problem) {
 		resources_used[i] -= problem.constraints[item][i];
 	}
 
+	--size;
 	return true;
 }
 
@@ -72,6 +79,7 @@ std::optional<Solution> Solution::removed(size_t item, const problem& problem) {
 		solution.resources_used[i] -= problem.constraints[item][i];
 	}
 
+	--solution.size;
 	return solution;
 }
 
@@ -81,7 +89,7 @@ std::optional<Solution> Solution::removed(size_t item, const problem& problem) {
  * @param CH the constructive heuristic to use
  */
 Solution::Solution(const problem& p, void (Solution::*CH)(const problem&)):
-	value(0), sol(p.n, false), resources_used(p.m, 0) {
+	value(0), size(0), sol(p.n, false), resources_used(p.m, 0) {
 	(this->*CH)(p);
 }
 
@@ -383,4 +391,77 @@ void Solution::verify(const problem& p) const {
 		assert(r[i] <= p.capacities[i]);
 		assert(r[i] == resources_used[i]);
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+volatile std::sig_atomic_t stop = 0;
+
+void handle_stop(int signum __attribute__((unused))) { stop = 1; }
+
+void Solution::simulated_annealing(const problem& p) {
+	std::signal(SIGALRM, handle_stop);
+	alarm(p.runtime());
+
+	random(p);
+
+	const auto init_T = p.initial_temperature();
+	auto       T      = init_T;
+	const auto alpha  = p.cooling_factor();
+
+	auto begin = steady_clock::now();
+	while (true) {
+		for (int i = 0; i < 20000; ++i) {
+			auto solution = *this;
+			auto a        = solution.random_item();
+			solution.remove(a, p);
+			auto b = solution.random_item();
+			solution.remove(b, p);
+			auto c = solution.random_item();
+			solution.remove(c, p);
+
+			solution.sol[a] = true;
+			solution.sol[b] = true;
+			solution.sol[c] = true;
+			solution.toyoda(p);
+			solution.sol[c] = false;
+			solution.sol[b] = false;
+			solution.sol[a] = false;
+
+			if (solution.value >= value) {
+				*this = solution;
+			} else {
+				auto accept_chance = std::exp(-static_cast<double>(value - solution.value) / T);
+//				if (i == 0) {
+//					std::cout << "T: " << T << " " << value << " " << value - solution.value << " "
+//							  << accept_chance << "\n";
+//				}
+				if (accept_chance > static_cast<double>(std::rand()) / RAND_MAX) {
+					*this = solution;
+				}
+			}
+		}
+
+		T = init_T *
+		    std::pow(alpha, duration_cast<milliseconds>(steady_clock::now() - begin).count());
+
+		if (stop) {
+			stop = 0;
+			return;
+		}
+	}
+}
+
+unsigned int Solution::random_item() const {
+	auto index = std::rand() % size;
+
+	for (size_t item = 0; item < sol.size(); ++item) {
+		if (sol[item]) {
+			if (index == 0) return item;
+			else
+				--index;
+		}
+	}
+
+	return 0;
 }

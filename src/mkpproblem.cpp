@@ -21,7 +21,7 @@
 #include "mkpproblem.h"
 
 problem* create_problem(int n, int m, int b, int* profits, int** constraints, int* capacities) {
-	auto* p     = static_cast<problem*>(malloc(sizeof(problem)));
+	auto* p        = static_cast<problem*>(malloc(sizeof(problem)));
 	p->n           = n;
 	p->m           = m;
 	p->best_known  = b;
@@ -76,4 +76,21 @@ problem* read_problem(char* filename) {
 	free(problem_data);
 
 	return (p);
+}
+
+unsigned int problem::runtime() const { return n * m / 10; }
+
+double problem::initial_temperature() const {
+	auto min = profits[0];
+	auto max = profits[0];
+	for (int i = 1; i < n; i++) {
+		if (profits[i] < min) min = profits[i];
+		if (profits[i] > max) max = profits[i];
+	}
+
+	return (min - max) * 0.1 / std::log(0.99);
+}
+
+double problem::cooling_factor() const {
+	return std::pow(std::log(0.99) / std::log(0.02), 1.0 / (runtime() * 1000));
 }

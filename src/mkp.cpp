@@ -23,13 +23,12 @@ int main(int argc, char* argv[]) {
 
 	if (pars->II) {
 		(s.*pars->II)(*p, pars->CH);
-		if (verbose)
-			std::cout << "After applying the iterative improvement algorithm:";
+		if (verbose) std::cout << "After applying the iterative improvement algorithm:";
 		std::cout << std::endl << s;
 	}
 
 	destroy_problem(p);
 	free(pars);
 
-	return (0);
+	return 0;
 }

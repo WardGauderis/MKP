@@ -53,6 +53,8 @@ params* read_params(int argc, char* argv[]) {
 	for (i = 2; i < argc; i++) {
 		if (strcmp(argv[i], "--seed") == 0) {
 			pars->seed = atoi(argv[++i]);
+		} else if (strcmp(argv[i], "--verbose") == 0) {
+			verbose = true;
 		} else if (strcmp(argv[i], "--random") == 0) {
 			pars->CH = &Solution::random;
 		} else if (strcmp(argv[i], "--greedy") == 0) {
@@ -65,8 +67,8 @@ params* read_params(int argc, char* argv[]) {
 			pars->II = &Solution::best_improvement;
 		} else if (strcmp(argv[i], "--VND") == 0) {
 			pars->II = &Solution::variable_neighbourhood_descent;
-		} else if (strcmp(argv[i], "--verbose") == 0) {
-			verbose = true;
+		} else if (strcmp(argv[i], "--SA") == 0) {
+			pars->CH = &Solution::simulated_annealing;
 		}
 	}
 	return (pars);

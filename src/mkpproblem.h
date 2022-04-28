@@ -31,6 +31,10 @@ struct problem {
 	int*  profits;
 	int** constraints;
 	int*  capacities;
+
+	[[nodiscard]] unsigned int runtime() const;
+	[[nodiscard]] double initial_temperature() const;
+	[[nodiscard]] double cooling_factor() const;
 };
 
 problem* create_problem(int n, int m, int b, int* profits, int** constraints, int* capacities);

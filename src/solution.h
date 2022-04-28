@@ -117,6 +117,8 @@ public:
 class Solution {
 	// Profit of the solution
 	unsigned int value;
+	// Amount of selected items;
+	size_t size;
 	// Indication of the selected items
 	Vector<bool> sol;
 	// Count of the used resources
@@ -134,6 +136,8 @@ class Solution {
 	                                  const int*                            shuffled,
 	                                  const std::function<bool(Solution&)>& criterion);
 
+	unsigned int random_item() const;
+
 public:
 	explicit Solution(const problem& p, void (Solution::*CH)(const problem&));
 
@@ -148,6 +152,8 @@ public:
 	void best_improvement(const problem& p, void (Solution::*CH)(const problem&));
 
 	void variable_neighbourhood_descent(const problem& p, void (Solution::*CH)(const problem&));
+
+	void simulated_annealing(const problem& p);
 
 	friend std::ostream& operator<<(std::ostream& os, const Solution& solution);
 
