@@ -68,7 +68,9 @@ params* read_params(int argc, char* argv[]) {
 		} else if (strcmp(argv[i], "--VND") == 0) {
 			pars->II = &Solution::variable_neighbourhood_descent;
 		} else if (strcmp(argv[i], "--SA") == 0) {
-			pars->CH = &Solution::simulated_annealing;
+			pars->SLA = &simulated_annealing;
+		} else if (strcmp(argv[i], "--MA") == 0) {
+			pars->SLA = &memetic_algorithm;
 		}
 	}
 	return (pars);

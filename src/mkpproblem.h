@@ -22,22 +22,24 @@
 #define __MKPPROBLEM_H__
 
 #include "mkpio.h"
-
+#include "util.h"
 
 struct problem {
-	int   n;
-	int   m;
-	int   best_known;
-	int*  profits;
-	int** constraints;
-	int*  capacities;
+	int            n;
+	int            m;
+	int            best_known;
+	int*           profits;
+	int**          constraints;
+	int*           capacities;
+	// The rescaled constraint matrix used in Toyoda
+	Matrix<double> A;
+
+	problem(int n, int m, int b, int* profits, int** constraints, int* capacities);
 
 	[[nodiscard]] unsigned int runtime() const;
-	[[nodiscard]] double initial_temperature() const;
-	[[nodiscard]] double cooling_factor() const;
+	[[nodiscard]] double       initial_temperature() const;
+	[[nodiscard]] double       cooling_factor() const;
 };
-
-problem* create_problem(int n, int m, int b, int* profits, int** constraints, int* capacities);
 
 void destroy_problem(problem* p);
 

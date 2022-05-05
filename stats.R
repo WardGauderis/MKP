@@ -2,7 +2,7 @@ library(reshape2)
 library(ggplot2)
 library(scales)
 
-stats <- read.table("stats.data", header = T, row.names = 1)
+stats <- read.table("data/local.data", header = T, row.names = 1)
 best <- read.table("mkp_instances/best_known_values.txt", header = T, row.names = 1)
 
 value_stats <- stats[, seq(1, 24, by=2)]
@@ -95,4 +95,3 @@ ggplot(m, aes(variable, value)) + geom_boxplot() + theme_linedraw() +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   labs(x="Algorithm", y="Computation time (ms)") + 
   scale_y_log10()
-

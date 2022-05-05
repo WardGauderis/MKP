@@ -5,11 +5,6 @@
 #include "solution.h"
 #include "util.h"
 
-#include <chrono>
-#include <csignal>
-
-using namespace std::chrono;
-
 bool verbose = false;
 
 /**
@@ -41,15 +36,27 @@ bool Solution::add(const size_t item, const problem& problem) {
 }
 
 /**
- * Remove an item from the solution
+ * Remove an item after checking it's inclusion
  * @param item
  * @param problem
  * @return success
  */
 bool Solution::remove(size_t item, const problem& problem) {
-	// Avoid removing twice
+	// Avoid adding twice
 	if (!sol[item]) return false;
 
+	remove_unchecked(item, problem);
+
+	return true;
+}
+
+/**
+ * Remove an item from the solution without checks
+ * @param item
+ * @param problem
+ * @return
+ */
+void Solution::remove_unchecked(size_t item, const problem& problem) {
 	// Remove the item and update the resources
 	sol[item] = false;
 	value -= problem.profits[item];
@@ -58,29 +65,6 @@ bool Solution::remove(size_t item, const problem& problem) {
 	}
 
 	--size;
-	return true;
-}
-
-/**
- * Create a solution with the item removed
- * @param item
- * @param problem
- * @return A new solution if successful
- */
-std::optional<Solution> Solution::removed(size_t item, const problem& problem) {
-	// Avoid removing twice
-	if (!sol[item]) return {};
-
-	// Remove the item and update the resources in the new solution
-	auto solution      = *this;
-	solution.sol[item] = false;
-	solution.value -= problem.profits[item];
-	for (size_t i = 0; i < solution.resources_used.size(); ++i) {
-		solution.resources_used[i] -= problem.constraints[item][i];
-	}
-
-	--solution.size;
-	return solution;
 }
 
 /**
@@ -179,20 +163,13 @@ void Solution::toyoda(const problem& p) {
 	Vector<size_t> indices(sol.size());
 	std::iota(indices.begin(), indices.end(), 0);
 
-	// Calculate A = W / L
-	Matrix<double> A(sol.size(), resources_used.size());
-	for (size_t i = 0; i < sol.size(); ++i)
-		for (size_t j = 0; j < resources_used.size(); ++j)
-			A(i, j) =
-				static_cast<double>(p.constraints[i][j]) / static_cast<double>(p.capacities[j]);
-
 	// Keep adding items while possible
 	bool added = true;
 	while (added) {
 		added = false;
 
 		// Calculate U then V
-		auto v = A * (sol * A).normalize();
+		auto v = p.A * (sol * p.A).normalize();
 		// Calculate the pseudo-utility
 		for (size_t i = 0; i < v.size(); ++i) v[i] = static_cast<double>(p.profits[i]) / v[i];
 
@@ -225,21 +202,23 @@ void Solution::first_improvement(const problem& p, void (Solution::*CH)(const pr
 
 		for (size_t i = 0; i < sol.size(); ++i) {
 			// Try to remove an item
-			if (auto solution = removed(shuffled[i], p)) {
-				// Apply the constructive heuristic after removal
-				// The bool indicating the selection of the item is temporally set to true so the
-				// constructive heuristic won't consider it again
+			if (!sol[shuffled[i]]) continue;
+			auto solution = *this;
+			solution.remove_unchecked(shuffled[i], p);
 
-				solution->sol[shuffled[i]] = true;
-				(*solution.*CH)(p);
-				solution->sol[shuffled[i]] = false;
+			// Apply the constructive heuristic after removal
+			// The bool indicating the selection of the item is temporally set to true so the
+			// constructive heuristic won't consider it again
 
-				// Accept the first improvement
-				if (solution->value > value) {
-					*this   = *solution;
-					changed = true;
-					break;
-				}
+			solution.sol[shuffled[i]] = true;
+			(solution.*CH)(p);
+			solution.sol[shuffled[i]] = false;
+
+			// Accept the first improvement
+			if (solution > *this) {
+				*this   = solution;
+				changed = true;
+				break;
 			}
 		}
 
@@ -264,19 +243,21 @@ void Solution::best_improvement(const problem& p, void (Solution::*CH)(const pro
 
 		for (size_t i = 0; i < sol.size(); ++i) {
 			// Try to remove an item
-			if (auto solution = removed(shuffled[i], p)) {
-				// Apply the constructive heuristic after removal
-				// The bool indicating the selection of the item is temporally set to true so the
-				// constructive heuristic won't consider it again
-				solution->sol[shuffled[i]] = true;
-				(*solution.*CH)(p);
-				solution->sol[shuffled[i]] = false;
+			if (!sol[shuffled[i]]) continue;
+			auto solution = *this;
+			solution.remove_unchecked(shuffled[i], p);
 
-				// Remember the best improvement
-				if (solution->value > best.value) {
-					best    = *solution;
-					changed = true;
-				}
+			// Apply the constructive heuristic after removal
+			// The bool indicating the selection of the item is temporally set to true so the
+			// constructive heuristic won't consider it again
+			solution.sol[shuffled[i]] = true;
+			(solution.*CH)(p);
+			solution.sol[shuffled[i]] = false;
+
+			// Remember the best improvement
+			if (solution > best) {
+				best    = solution;
+				changed = true;
 			}
 		}
 
@@ -308,7 +289,7 @@ void Solution::variable_neighbourhood_descent(const problem& p,
 			// Apply the constructive heuristic after removal of k items
 			(solution.*CH)(p);
 			// Check if it is an improvement
-			return solution.value > value;
+			return solution > *this;
 		});
 
 		// If an improvement is found, return to the first neighbourhood, otherwise try the next one
@@ -369,11 +350,11 @@ bool explore_neighbourhood(Solution& solution, const problem& p, size_t offset, 
 }
 
 /**
- * Verify whether the solution is a valid solution for the problem
+ * Validate whether the solution is a valid solution for the problem
  * This is only used for debugging purposes
  * @param p
  */
-void Solution::verify(const problem& p) const {
+void Solution::validate(const problem& p) const {
 	unsigned int v = 0;
 	Vector<int>  r(resources_used.size(), 0);
 
@@ -393,68 +374,32 @@ void Solution::verify(const problem& p) const {
 	}
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-volatile std::sig_atomic_t stop = 0;
-
-void handle_stop(int signum __attribute__((unused))) { stop = 1; }
-
-void Solution::simulated_annealing(const problem& p) {
-	std::signal(SIGALRM, handle_stop);
-	alarm(p.runtime());
-
-	random(p);
-
-	const auto init_T = p.initial_temperature();
-	auto       T      = init_T;
-	const auto alpha  = p.cooling_factor();
-
-	auto begin = steady_clock::now();
-	while (true) {
-		for (int i = 0; i < 20000; ++i) {
-			auto solution = *this;
-			auto a        = solution.random_item();
-			solution.remove(a, p);
-			auto b = solution.random_item();
-			solution.remove(b, p);
-			auto c = solution.random_item();
-			solution.remove(c, p);
-
-			solution.sol[a] = true;
-			solution.sol[b] = true;
-			solution.sol[c] = true;
-			solution.toyoda(p);
-			solution.sol[c] = false;
-			solution.sol[b] = false;
-			solution.sol[a] = false;
-
-			if (solution.value >= value) {
-				*this = solution;
-			} else {
-				auto accept_chance = std::exp(-static_cast<double>(value - solution.value) / T);
-//				if (i == 0) {
-//					std::cout << "T: " << T << " " << value << " " << value - solution.value << " "
-//							  << accept_chance << "\n";
-//				}
-				if (accept_chance > static_cast<double>(std::rand()) / RAND_MAX) {
-					*this = solution;
-				}
-			}
-		}
-
-		T = init_T *
-		    std::pow(alpha, duration_cast<milliseconds>(steady_clock::now() - begin).count());
-
-		if (stop) {
-			stop = 0;
-			return;
+/**
+ * Checks if a solution is invalid
+ * @param p
+ * @return
+ */
+bool Solution::invalid(const problem& p) const {
+	// Check the constraints
+	bool violated = false;
+	for (size_t i = 0; i < resources_used.size(); ++i) {
+		if (resources_used[i] > p.capacities[i]) {
+			violated = true;
+			break;
 		}
 	}
+	return violated;
 }
 
+/**
+ * Selects a random item present in the solution
+ * @return
+ */
 unsigned int Solution::random_item() const {
+	// Choose an index of a present item
 	auto index = std::rand() % size;
 
+	// Find the present item with this index
 	for (size_t item = 0; item < sol.size(); ++item) {
 		if (sol[item]) {
 			if (index == 0) return item;

@@ -20,24 +20,23 @@
 
 #include "mkpproblem.h"
 
-problem* create_problem(int n, int m, int b, int* profits, int** constraints, int* capacities) {
-	auto* p        = static_cast<problem*>(malloc(sizeof(problem)));
-	p->n           = n;
-	p->m           = m;
-	p->best_known  = b;
-	p->profits     = profits;
-	p->constraints = constraints;
-	p->capacities  = capacities;
-	return (p);
+/**
+ * Create a problem and also initialize the rescaled constraint value matrix A used in Toyoda
+ * @param n
+ * @param m
+ * @param b
+ * @param profits
+ * @param constraints
+ * @param capacities
+ */
+problem::problem(int n, int m, int b, int* profits, int** constraints, int* capacities):
+	n(n), m(m), best_known(b), profits(profits), constraints(constraints), capacities(capacities),
+	A(n, m) {
+	for (size_t i = 0; i < static_cast<size_t>(n); ++i)
+		for (size_t j = 0; j < static_cast<size_t>(m); ++j)
+			A(i, j) = static_cast<double>(constraints[i][j]) / static_cast<double>(capacities[j]);
 }
 
-void destroy_problem(problem* p) {
-	free(p->profits);
-	for (int i = 0; i < p->n; i++) free(p->constraints[i]);
-	free(p->constraints);
-	free(p->capacities);
-	free(p);
-}
 
 void print_problem(problem* p) {
 	int i, j;
@@ -71,7 +70,7 @@ problem* read_problem(char* filename) {
 
 	close_file(input_file);
 
-	problem* p = create_problem(n, m, b, profits, constraints, capacities);
+	problem* p = new problem(n, m, b, profits, constraints, capacities);
 
 	free(problem_data);
 

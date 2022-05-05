@@ -12,6 +12,13 @@ int main(int argc, char* argv[]) {
 	problem* p = read_problem(pars->instance_file);
 	if (verbose) print_problem(p);
 
+	if (pars->SLA) {
+		auto s = pars->SLA(*p);
+		std::cout << s;
+		s.validate(*p);
+		return 0;
+	}
+
 	if (!pars->CH) {
 		std::cout << "No constructive heuristic has been defined." << std::endl;
 		return 1;
@@ -27,8 +34,8 @@ int main(int argc, char* argv[]) {
 		std::cout << std::endl << s;
 	}
 
-	destroy_problem(p);
-	free(pars);
+	delete p;
+	delete pars;
 
 	return 0;
 }

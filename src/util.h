@@ -28,6 +28,107 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <vector>
+
+/**
+ * Vector class
+ * @tparam T
+ */
+template<class T> class Vector: public std::vector<T> {
+public:
+	Vector(): std::vector<T>() {}
+	explicit Vector(size_t n): std::vector<T>(n) {}
+	Vector(size_t n, T value): std::vector<T>(n, value) {}
+
+	/**
+	 * Normalize the vector and set the vector to 1 if it's the 0 vector (for the toyoda algorithm)
+	 * @return a reference to this
+	 */
+	Vector& normalize() {
+		// Because we are only interested in the rankings of the items according to pseudo-utility
+		// we can ignore normalizing the vector U in the toyoda algorithm.
+		if (std::all_of(this->begin(), this->end(), [](T x) { return x == 0; })) {
+			for (auto& item : *this) { item = 1.0; }
+		}
+
+		//				T norm = 0.0;
+		//				for (const auto& item : *this) { norm += item * item; }
+		//				norm = std::sqrt(norm);
+		//
+		//				if (norm == 0.0) {
+		//					for (auto& item : *this) { item = 1.0; }
+		//				} else {
+		//					for (auto& item : *this) { item /= norm; }
+		//				}
+
+		return *this;
+	}
+};
+
+/**
+ * Matrix class using the indexing trick for faster computation
+ * @tparam T
+ */
+template<class T> class Matrix {
+	size_t    n_tot;
+	size_t    m_tot;
+	Vector<T> items;
+
+public:
+	/**
+	 * Construct the matrix
+	 * @param n rows
+	 * @param m columns
+	 */
+	Matrix(size_t n, size_t m): n_tot(n), m_tot(m), items(n * m) {}
+
+	/**
+	 * Index the matrix
+	 * @param n
+	 * @param m
+	 * @return a reference
+	 */
+	T& operator()(size_t n, size_t m) { return items[n * m_tot + m]; }
+
+	/**
+	 * Index the matrix
+	 * @param n
+	 * @param m
+	 * @return the value
+	 */
+	T operator()(size_t n, size_t m) const { return items[n * m_tot + m]; }
+
+	/**
+	 * Matrix vector multiplication M * C
+	 * @param m matrix
+	 * @param c vector
+	 * @return
+	 */
+	friend Vector<T> operator*(const Matrix<T>& m, const Vector<T>& c) {
+		Vector<T> r(m.n_tot, 0);
+
+		for (size_t i = 0; i < m.n_tot; ++i)
+			for (size_t j = 0; j < m.m_tot; ++j) r[i] += m(i, j) * c[j];
+
+		return r;
+	}
+
+	/**
+	 * Transposed Matrix vector multiplication M^T * C
+	 * @tparam S
+	 * @param c vector
+	 * @param m matrix
+	 * @return
+	 */
+	template<class S> friend Vector<T> operator*(const Vector<S>& c, const Matrix<T>& m) {
+		Vector<T> r(m.m_tot, 0);
+
+		for (size_t i = 0; i < m.n_tot; ++i)
+			for (size_t j = 0; j < m.m_tot; ++j) r[j] += m(i, j) * c[i];
+
+		return r;
+	}
+};
 
 class Solution;
 struct problem;
@@ -37,7 +138,7 @@ struct params {
 	int   seed{};
 	void (Solution::*CH)(const problem&){};
 	void (Solution::*II)(const problem&, void (Solution::*CH)(const problem&)){};
-	Solution (*VND)(const problem&){};
+	Solution (*SLA)(const problem&){};
 };
 
 // set the random seed
