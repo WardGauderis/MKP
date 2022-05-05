@@ -1,3 +1,0 @@
-/home/ward/Documents/HO/project/MKP/cmake-build-debug-coverage/CMakeFiles/MKP.dir
-/home/ward/Documents/HO/project/MKP/cmake-build-debug-coverage/CMakeFiles/edit_cache.dir
-/home/ward/Documents/HO/project/MKP/cmake-build-debug-coverage/CMakeFiles/rebuild_cache.dir

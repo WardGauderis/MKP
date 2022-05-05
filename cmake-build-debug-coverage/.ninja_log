@@ -1,7 +1,0 @@
-# ninja log v5
-0	1217	1650321299380167311	CMakeFiles/MKP.dir/src/util.cpp.o	7156508a937afb6a
-0	3028	1650321301190195163	CMakeFiles/MKP.dir/src/solution.cpp.o	7f0dc2cf71c5f798
-0	420	1650321298583488380	CMakeFiles/MKP.dir/src/mkpio.cpp.o	33d02c4dbc3cf4df
-0	496	1650321298660156227	CMakeFiles/MKP.dir/src/mkpproblem.cpp.o	a96bbf0f29a80a4c
-0	1104	1650321299266832232	CMakeFiles/MKP.dir/src/mkp.cpp.o	4da07379362c8a4c
-3028	3102	1650321301263529625	MKP	93907e388e0bdd1b

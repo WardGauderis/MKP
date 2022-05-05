@@ -1,4 +1,0 @@
-/opt/clion/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/opt/clion/bin/ninja/linux/ninja -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_C_FLAGS=--coverage -G Ninja -S /home/ward/Documents/HO/project/MKP -B /home/ward/Documents/HO/project/MKP/cmake-build-debug-coverage
--- Configuring done
--- Generating done
--- Build files have been written to: /home/ward/Documents/HO/project/MKP/cmake-build-debug-coverage
