@@ -31,8 +31,8 @@ Solution simulated_annealing(const problem& p) {
 	std::signal(SIGALRM, handle_stop);
 	alarm(p.runtime());
 
-	// Construct an initial solution using the Toyoda constructive heuristic
-	auto solution = Solution(p, &Solution::toyoda);
+	// Construct an initial solution using the Random constructive heuristic
+	auto solution = Solution(p, &Solution::random);
 
 	// Set the geometric annealing schedule
 	const auto init_T = p.initial_temperature();
@@ -117,6 +117,10 @@ Solution memetic_algorithm(const problem& p) {
 
 		// Recombine them into an invalid child solution using crossover
 		Solution child = crossover(parent_1, parent_2, p);
+		// Apply the first improvement algorithm with Toyoda
+		// This is disabled as it didn't improve the solution quality
+		// child.repair(p
+		// child.first_improvement(p, &Solution::toyoda);
 		// Mutate the invalid child
 		child.mutate(p);
 		// Make the child valid again
@@ -132,7 +136,8 @@ Solution memetic_algorithm(const problem& p) {
 
 		// Replace the worst scoring individual with the child
 		auto min = std::min_element(population.begin(), population.end());
-		if (child > *min) { *min = std::move(child); }
+//		if (child > *min) { *min = std::move(child); }
+		*min = std::move(child);
 	}
 }
 
